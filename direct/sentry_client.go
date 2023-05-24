@@ -218,6 +218,10 @@ func (c *SentryClientDirect) SendMessageToRandomPeers(ctx context.Context, in *s
 	return c.server.SendMessageToRandomPeers(ctx, in)
 }
 
+func (c *SentryClientDirect) SendMessageToRandomPeersCustom(ctx context.Context, in *sentry.SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*sentry.SentPeers, error) {
+	return c.server.SendMessageToRandomPeersCustom(ctx, in)
+}
+
 func (c *SentryClientDirect) SendMessageToAll(ctx context.Context, in *sentry.OutboundMessageData, opts ...grpc.CallOption) (*sentry.SentPeers, error) {
 	return c.server.SendMessageToAll(ctx, in)
 }

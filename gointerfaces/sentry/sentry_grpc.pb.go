@@ -51,6 +51,7 @@ type SentryClient interface {
 	SendMessageByMinBlock(ctx context.Context, in *SendMessageByMinBlockRequest, opts ...grpc.CallOption) (*SentPeers, error)
 	SendMessageById(ctx context.Context, in *SendMessageByIdRequest, opts ...grpc.CallOption) (*SentPeers, error)
 	SendMessageToRandomPeers(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error)
+	SendMessageToRandomPeersCustom(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error)
 	SendMessageToAll(ctx context.Context, in *OutboundMessageData, opts ...grpc.CallOption) (*SentPeers, error)
 	// Subscribe to receive messages.
 	// Calling multiple times with a different set of ids starts separate streams.
@@ -128,6 +129,15 @@ func (c *sentryClient) SendMessageById(ctx context.Context, in *SendMessageByIdR
 }
 
 func (c *sentryClient) SendMessageToRandomPeers(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error) {
+	out := new(SentPeers)
+	err := c.cc.Invoke(ctx, Sentry_SendMessageToRandomPeers_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *sentryClient) SendMessageToRandomPeersCustom(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error) {
 	out := new(SentPeers)
 	err := c.cc.Invoke(ctx, Sentry_SendMessageToRandomPeers_FullMethodName, in, out, opts...)
 	if err != nil {
@@ -259,6 +269,7 @@ type SentryServer interface {
 	SendMessageByMinBlock(context.Context, *SendMessageByMinBlockRequest) (*SentPeers, error)
 	SendMessageById(context.Context, *SendMessageByIdRequest) (*SentPeers, error)
 	SendMessageToRandomPeers(context.Context, *SendMessageToRandomPeersRequest) (*SentPeers, error)
+	SendMessageToRandomPeersCustom(context.Context, *SendMessageToRandomPeersRequest) (*SentPeers, error)
 	SendMessageToAll(context.Context, *OutboundMessageData) (*SentPeers, error)
 	// Subscribe to receive messages.
 	// Calling multiple times with a different set of ids starts separate streams.
@@ -297,6 +308,9 @@ func (UnimplementedSentryServer) SendMessageById(context.Context, *SendMessageBy
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessageById not implemented")
 }
 func (UnimplementedSentryServer) SendMessageToRandomPeers(context.Context, *SendMessageToRandomPeersRequest) (*SentPeers, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SendMessageToRandomPeers not implemented")
+}
+func (UnimplementedSentryServer) SendMessageToRandomPeersCustom(context.Context, *SendMessageToRandomPeersRequest) (*SentPeers, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SendMessageToRandomPeers not implemented")
 }
 func (UnimplementedSentryServer) SendMessageToAll(context.Context, *OutboundMessageData) (*SentPeers, error) {
@@ -455,6 +469,24 @@ func _Sentry_SendMessageToRandomPeers_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SentryServer).SendMessageToRandomPeers(ctx, req.(*SendMessageToRandomPeersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Sentry_SendMessageToRandomPeersCustom_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendMessageToRandomPeersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SentryServer).SendMessageToRandomPeers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Sentry_SendMessageToRandomPeers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SentryServer).SendMessageToRandomPeersCustom(ctx, req.(*SendMessageToRandomPeersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }

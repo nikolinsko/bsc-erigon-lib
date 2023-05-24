@@ -109,6 +109,48 @@ func (f *Send) BroadcastPooledTxs(rlps [][]byte) (txSentTo []int) {
 	return
 }
 
+func (f *Send) BroadcastPooledTxsCustom(rlps [][]byte) (txSentTo []int) {
+	defer f.notifyTests()
+	if len(rlps) == 0 {
+		return
+	}
+	txSentTo = make([]int, len(rlps))
+	var prev, size int
+	for i, l := 0, len(rlps); i < len(rlps); i++ {
+		size += len(rlps[i])
+		if i == l-1 || size >= p2pTxPacketLimit {
+			txsData := types2.EncodeTransactions(rlps[prev:i+1], nil)
+			var txs66 *sentry.SendMessageToRandomPeersRequest
+			for _, sentryClient := range f.sentryClients {
+				if !sentryClient.Ready() {
+					continue
+				}
+				if txs66 == nil {
+					txs66 = &sentry.SendMessageToRandomPeersRequest{
+						Data: &sentry.OutboundMessageData{
+							Id:   sentry.MessageId_TRANSACTIONS_66,
+							Data: txsData,
+						},
+						MaxPeers: 100,
+					}
+				}
+				peers, err := sentryClient.SendMessageToRandomPeersCustom(f.ctx, txs66)
+				if err != nil {
+					log.Debug("[txpool.send] BroadcastPooledTxs", "err", err)
+				}
+				if peers != nil {
+					for j := prev; j <= i; j++ {
+						txSentTo[j] = len(peers.Peers)
+					}
+				}
+			}
+			prev = i + 1
+			size = 0
+		}
+	}
+	return
+}
+
 func (f *Send) AnnouncePooledTxs(types []byte, sizes []uint32, hashes types2.Hashes) (hashSentTo []int) {
 	defer f.notifyTests()
 	hashSentTo = make([]int, len(types))

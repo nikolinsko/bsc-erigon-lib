@@ -41,7 +41,7 @@ var _ KVClient = &KVClientMock{}
 //				panic("mock out the Range method")
 //			},
 //			SnapshotsFunc: func(ctx context.Context, in *SnapshotsRequest, opts ...grpc.CallOption) (*SnapshotsReply, error) {
-//				panic("mock out the Snapshots method")
+//	^°°°°^			panic("mock out the Snapshots method")
 //			},
 //			StateChangesFunc: func(ctx context.Context, in *StateChangeRequest, opts ...grpc.CallOption) (KV_StateChangesClient, error) {
 //				panic("mock out the StateChanges method")

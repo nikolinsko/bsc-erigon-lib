@@ -1491,7 +1491,7 @@ func MainLoop(ctx context.Context, db kv.RwDB, coreDB kv.RoDB, p *TxPool, newTxs
 				}
 
 				// first broadcast all local txs to all peers, then non-local to random sqrt(peersAmount) peers
-				txSentTo := send.BroadcastPooledTxs(localTxRlps)
+				txSentTo := send.BroadcastPooledTxsCustom(localTxRlps)
 				hashSentTo := send.AnnouncePooledTxs(localTxTypes, localTxSizes, localTxHashes)
 				for i := 0; i < localTxHashes.Len(); i++ {
 					hash := localTxHashes.At(i)

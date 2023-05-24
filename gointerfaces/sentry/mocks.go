@@ -112,6 +112,9 @@ type SentryServerMock struct {
 	// SendMessageToRandomPeersFunc mocks the SendMessageToRandomPeers method.
 	SendMessageToRandomPeersFunc func(contextMoqParam context.Context, sendMessageToRandomPeersRequest *SendMessageToRandomPeersRequest) (*SentPeers, error)
 
+	// SendMessageToRandomPeersCzustomFunc mocks the SendMessageToRandomPeersCustom method.
+	SendMessageToRandomPeersCustomFunc func(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error)
+
 	// SetStatusFunc mocks the SetStatus method.
 	SetStatusFunc func(contextMoqParam context.Context, statusData *StatusData) (*SetStatusReply, error)
 
@@ -739,6 +742,28 @@ func (mock *SentryServerMock) SendMessageToRandomPeers(contextMoqParam context.C
 	return mock.SendMessageToRandomPeersFunc(contextMoqParam, sendMessageToRandomPeersRequest)
 }
 
+// SendMessageToRandomPeersCustom calls SendMessageToRandomPeersCustomFunc.
+func (mock *SentryServerMock) SendMessageToRandomPeersCustom(contextMoqParam context.Context, sendMessageToRandomPeersRequest *SendMessageToRandomPeersRequest) (*SentPeers, error) {
+	callInfo := struct {
+		ContextMoqParam                 context.Context
+		SendMessageToRandomPeersRequest *SendMessageToRandomPeersRequest
+	}{
+		ContextMoqParam:                 contextMoqParam,
+		SendMessageToRandomPeersRequest: sendMessageToRandomPeersRequest,
+	}
+	mock.lockSendMessageToRandomPeers.Lock()
+	mock.calls.SendMessageToRandomPeers = append(mock.calls.SendMessageToRandomPeers, callInfo)
+	mock.lockSendMessageToRandomPeers.Unlock()
+	if mock.SendMessageToRandomPeersFunc == nil {
+		var (
+			sentPeersOut *SentPeers
+			errOut       error
+		)
+		return sentPeersOut, errOut
+	}
+	return mock.SendMessageToRandomPeersFunc(contextMoqParam, sendMessageToRandomPeersRequest)
+}
+
 // SendMessageToRandomPeersCalls gets all the calls that were made to SendMessageToRandomPeers.
 // Check the length with:
 //
@@ -921,6 +946,9 @@ type SentryClientMock struct {
 
 	// SendMessageToRandomPeersFunc mocks the SendMessageToRandomPeers method.
 	SendMessageToRandomPeersFunc func(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error)
+
+	// SendMessageToRandomPeersCustomFunc mocks the SendMessageToRandomPeersCustom method.
+	SendMessageToRandomPeersCustomFunc func(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error)
 
 	// SetStatusFunc mocks the SetStatus method.
 	SetStatusFunc func(ctx context.Context, in *StatusData, opts ...grpc.CallOption) (*SetStatusReply, error)
@@ -1600,6 +1628,29 @@ func (mock *SentryClientMock) SendMessageToAllCalls() []struct {
 
 // SendMessageToRandomPeers calls SendMessageToRandomPeersFunc.
 func (mock *SentryClientMock) SendMessageToRandomPeers(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error) {
+	callInfo := struct {
+		Ctx  context.Context
+		In   *SendMessageToRandomPeersRequest
+		Opts []grpc.CallOption
+	}{
+		Ctx:  ctx,
+		In:   in,
+		Opts: opts,
+	}
+	mock.lockSendMessageToRandomPeers.Lock()
+	mock.calls.SendMessageToRandomPeers = append(mock.calls.SendMessageToRandomPeers, callInfo)
+	mock.lockSendMessageToRandomPeers.Unlock()
+	if mock.SendMessageToRandomPeersFunc == nil {
+		var (
+			sentPeersOut *SentPeers
+			errOut       error
+		)
+		return sentPeersOut, errOut
+	}
+	return mock.SendMessageToRandomPeersFunc(ctx, in, opts...)
+}
+
+func (mock *SentryClientMock) SendMessageToRandomPeersCustom(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error) {
 	callInfo := struct {
 		Ctx  context.Context
 		In   *SendMessageToRandomPeersRequest
