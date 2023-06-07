@@ -720,6 +720,7 @@ func (c *Config) Rules(num uint64, time uint64) *Rules {
 		IsPlato:               c.IsPlato(num),
 		IsEip1559FeeCollector: c.IsEip1559FeeCollector(num),
 		IsAura:                c.Aura != nil,
+		IsParlia:              true,
 	}
 }
 
