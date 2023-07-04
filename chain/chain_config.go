@@ -80,6 +80,7 @@ type Config struct {
 	PlanckBlock     *big.Int `json:"planckBlock,omitempty" toml:",omitempty"`     // planckBlock switch block (nil = no fork, 0 = already activated)
 	LubanBlock      *big.Int `json:"lubanBlock,omitempty" toml:",omitempty"`      // lubanBlock switch block (nil = no fork, 0 = already activated)
 	PlatoBlock      *big.Int `json:"platoBlock,omitempty" toml:",omitempty"`      // platoBlock switch block (nil = no fork, 0 = already activated)
+	HertzBlock      *big.Int `json:"hertzBlock,omitempty" toml:",omitempty"`      // hertzBlock switch block (nil = no fork, 0 = already activated)
 	// Gnosis Chain fork blocks
 	PosdaoBlock *big.Int `json:"posdaoBlock,omitempty"`
 
@@ -98,7 +99,7 @@ func (c *Config) String() string {
 	engine := c.getEngine()
 
 	if c.Consensus == ParliaConsensus {
-		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Gibbs: %v, Planck: %v, Luban: %v, Plato: %v, Engine: %v}",
+		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Gibbs: %v, Planck: %v, Luban: %v, Plato: %v, Hertz: %v Engine: %v}",
 			c.ChainID,
 			c.RamanujanBlock,
 			c.NielsBlock,
@@ -112,6 +113,7 @@ func (c *Config) String() string {
 			c.PlanckBlock,
 			c.LubanBlock,
 			c.PlatoBlock,
+			c.HertzBlock,
 			engine,
 		)
 	}
@@ -342,6 +344,14 @@ func (c *Config) IsOnPlato(num *big.Int) bool {
 	return numEqual(c.PlatoBlock, num)
 }
 
+func (c *Config) IsHertz(num uint64) bool {
+	return isForked(c.HertzBlock, num)
+}
+
+func (c *Config) IsOnHertz(num *big.Int) bool {
+	return numEqual(c.HertzBlock, num)
+}
+
 // CheckCompatible checks whether scheduled fork transitions have been imported
 // with a mismatching chain configuration.
 func (c *Config) CheckCompatible(newcfg *Config, height uint64) *ConfigCompatError {
@@ -382,6 +392,7 @@ func (c *Config) forkBlockNumbers() []forkBlockNumber {
 		{name: "planckBlock", blockNumber: c.PlanckBlock},
 		{name: "lubanBlock", blockNumber: c.LubanBlock},
 		{name: "platoBlock", blockNumber: c.PlatoBlock},
+		{name: "hertzBlock", blockNumber: c.HertzBlock},
 		{name: "berlinBlock", blockNumber: c.BerlinBlock, optional: true},
 		{name: "londonBlock", blockNumber: c.LondonBlock, optional: true},
 		{name: "arrowGlacierBlock", blockNumber: c.ArrowGlacierBlock, optional: true},
@@ -510,6 +521,9 @@ func (c *Config) checkCompatible(newcfg *Config, head uint64) *ConfigCompatError
 	}
 	if incompatible(c.PlatoBlock, newcfg.PlatoBlock, head) {
 		return newCompatError("plato fork block", c.PlatoBlock, newcfg.PlatoBlock)
+	}
+	if incompatible(c.HertzBlock, newcfg.HertzBlock, head) {
+		return newCompatError("hertz fork block", c.HertzBlock, newcfg.HertzBlock)
 	}
 	return nil
 }
@@ -682,14 +696,14 @@ func sortMapKeys(m map[string]uint64) []string {
 // Rules is a one time interface meaning that it shouldn't be used in between transition
 // phases.
 type Rules struct {
-	ChainID                                                 *big.Int
-	IsHomestead, IsTangerineWhistle, IsSpuriousDragon       bool
-	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul bool
-	IsBerlin, IsLondon, IsShanghai, IsCancun                bool
-	IsSharding, IsPrague                                    bool
-	IsNano, IsMoran, IsGibbs, IsPlanck, IsLuban, IsPlato    bool
-	IsEip1559FeeCollector                                   bool
-	IsParlia, IsAura                                        bool
+	ChainID                                                       *big.Int
+	IsHomestead, IsTangerineWhistle, IsSpuriousDragon             bool
+	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul       bool
+	IsBerlin, IsLondon, IsShanghai, IsCancun                      bool
+	IsSharding, IsPrague                                          bool
+	IsNano, IsMoran, IsGibbs, IsPlanck, IsLuban, IsPlato, IsHertz bool
+	IsEip1559FeeCollector                                         bool
+	IsParlia, IsAura                                              bool
 }
 
 // Rules ensures c's ChainID is not nil and returns a new Rules instance
@@ -718,8 +732,10 @@ func (c *Config) Rules(num uint64, time uint64) *Rules {
 		IsPlanck:              c.IsPlanck(num),
 		IsLuban:               c.IsLuban(num),
 		IsPlato:               c.IsPlato(num),
+		IsHertz:               c.IsHertz(num),
 		IsEip1559FeeCollector: c.IsEip1559FeeCollector(num),
 		IsAura:                c.Aura != nil,
+		IsParlia:              true,
 	}
 }
 
