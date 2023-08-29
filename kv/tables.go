@@ -301,7 +301,7 @@ const (
 	CliqueSnapshot     = "CliqueSnapshot"
 	CliqueLastSnapshot = "CliqueLastSnapshot"
 
-	// Snapshot table used for Binance Smart Chain's consensus engine Parlia
+	// Snapshot table used for BNB Smart Chain's consensus engine Parlia
 	// Schema of key/value pairs containing:
 	// Key (string): SnapshotFullKey = SnapshotBucket + num (uint64 big endian) + hash
 	// Value (JSON blob):

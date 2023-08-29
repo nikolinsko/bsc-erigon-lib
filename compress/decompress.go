@@ -151,6 +151,7 @@ func NewDecompressor(compressedFilePath string) (*Decompressor, error) {
 	}
 	var err error
 	defer func() {
+
 		if rec := recover(); rec != nil {
 			err = fmt.Errorf("decompressing file: %s, %+v, trace: %s", compressedFilePath, rec, dbg.Stack())
 		}
@@ -172,9 +173,10 @@ func NewDecompressor(compressedFilePath string) (*Decompressor, error) {
 	if d.mmapHandle1, d.mmapHandle2, err = mmap.Mmap(d.f, int(d.size)); err != nil {
 		return nil, err
 	}
-
 	// read patterns from file
 	d.data = d.mmapHandle1[:d.size]
+	defer d.EnableReadAhead().DisableReadAhead() //speedup opening on slow drives
+
 	d.wordsCount = binary.BigEndian.Uint64(d.data[:8])
 	d.emptyWordsCount = binary.BigEndian.Uint64(d.data[8:16])
 	dictSize := binary.BigEndian.Uint64(d.data[16:24])
