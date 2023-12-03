@@ -64,6 +64,7 @@ type Config struct {
 
 	// Mainnet fork scheduling switched from block numbers to timestamps after The Merge
 	ShanghaiTime     *big.Int `json:"shanghaiTime,omitempty"`
+	KeplerTime       *big.Int `json:"keplerTime,omitempty"`
 	CancunTime       *big.Int `json:"cancunTime,omitempty"`
 	ShardingForkTime *big.Int `json:"shardingForkTime,omitempty"`
 	PragueTime       *big.Int `json:"pragueTime,omitempty"`
@@ -99,7 +100,7 @@ func (c *Config) String() string {
 	engine := c.getEngine()
 
 	if c.Consensus == ParliaConsensus {
-		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Gibbs: %v, Planck: %v, Luban: %v, Plato: %v, Hertz: %v Engine: %v}",
+		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Planck: %v, Luban: %v, Plato: %v, Hertz: %v, ShanghaiTime: %v, KeplerTime %v, Engine: %v}",
 			c.ChainID,
 			c.RamanujanBlock,
 			c.NielsBlock,
@@ -109,11 +110,12 @@ func (c *Config) String() string {
 			c.GibbsBlock,
 			c.NanoBlock,
 			c.MoranBlock,
-			c.GibbsBlock,
 			c.PlanckBlock,
 			c.LubanBlock,
 			c.PlatoBlock,
 			c.HertzBlock,
+			c.ShanghaiTime,
+			c.KeplerTime,
 			engine,
 		)
 	}
@@ -227,8 +229,8 @@ func (c *Config) IsGrayGlacier(num uint64) bool {
 }
 
 // IsShanghai returns whether time is either equal to the Shanghai fork time or greater.
-func (c *Config) IsShanghai(time uint64) bool {
-	return isForked(c.ShanghaiTime, time)
+func (c *Config) IsShanghai(num uint64, time uint64) bool {
+	return c.IsLondon(num) && isForked(c.ShanghaiTime, time)
 }
 
 // IsCancun returns whether time is either equal to the Cancun fork time or greater.
@@ -350,6 +352,19 @@ func (c *Config) IsHertz(num uint64) bool {
 
 func (c *Config) IsOnHertz(num *big.Int) bool {
 	return numEqual(c.HertzBlock, num)
+}
+
+// IsKepler returns whether time is either equal to the IsKepler fork time or greater.
+func (c *Config) IsKepler(num uint64, time uint64) bool {
+	return c.IsLondon(num) && isForked(c.KeplerTime, time)
+}
+
+func (c *Config) IsOnKepler(currentBlockNumber *big.Int, lastBlockTime uint64, currentBlockTime uint64) bool {
+	lastBlockNumber := new(big.Int)
+	if currentBlockNumber.Cmp(big.NewInt(1)) >= 0 {
+		lastBlockNumber.Sub(currentBlockNumber, big.NewInt(1))
+	}
+	return !c.IsKepler(lastBlockNumber.Uint64(), lastBlockTime) && c.IsKepler(currentBlockNumber.Uint64(), currentBlockTime)
 }
 
 // CheckCompatible checks whether scheduled fork transitions have been imported
@@ -699,7 +714,7 @@ type Rules struct {
 	ChainID                                                       *big.Int
 	IsHomestead, IsTangerineWhistle, IsSpuriousDragon             bool
 	IsByzantium, IsConstantinople, IsPetersburg, IsIstanbul       bool
-	IsBerlin, IsLondon, IsShanghai, IsCancun                      bool
+	IsBerlin, IsLondon, IsShanghai, IsKepler, IsCancun            bool
 	IsSharding, IsPrague                                          bool
 	IsNano, IsMoran, IsGibbs, IsPlanck, IsLuban, IsPlato, IsHertz bool
 	IsEip1559FeeCollector                                         bool
@@ -724,7 +739,7 @@ func (c *Config) Rules(num uint64, time uint64) *Rules {
 		IsIstanbul:            c.IsIstanbul(num),
 		IsBerlin:              c.IsBerlin(num),
 		IsLondon:              c.IsLondon(num),
-		IsShanghai:            c.IsShanghai(time),
+		IsShanghai:            c.IsShanghai(num, time),
 		IsCancun:              c.IsCancun(time),
 		IsPrague:              c.IsPrague(time),
 		IsNano:                c.IsNano(num),
@@ -733,6 +748,7 @@ func (c *Config) Rules(num uint64, time uint64) *Rules {
 		IsLuban:               c.IsLuban(num),
 		IsPlato:               c.IsPlato(num),
 		IsHertz:               c.IsHertz(num),
+		IsKepler:              c.IsKepler(num, time),
 		IsEip1559FeeCollector: c.IsEip1559FeeCollector(num),
 		IsAura:                c.Aura != nil,
 		IsParlia:              true,
