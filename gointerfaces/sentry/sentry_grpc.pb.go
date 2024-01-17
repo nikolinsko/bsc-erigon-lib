@@ -28,6 +28,7 @@ const (
 	Sentry_SendMessageByMinBlock_FullMethodName    = "/sentry.Sentry/SendMessageByMinBlock"
 	Sentry_SendMessageById_FullMethodName          = "/sentry.Sentry/SendMessageById"
 	Sentry_SendMessageToRandomPeers_FullMethodName = "/sentry.Sentry/SendMessageToRandomPeers"
+	Sentry_SendMessageToRandomPeersCustom_FullMethodName = "/sentry.Sentry/SendMessageToRandomPeersCustom"
 	Sentry_SendMessageToAll_FullMethodName         = "/sentry.Sentry/SendMessageToAll"
 	Sentry_Messages_FullMethodName                 = "/sentry.Sentry/Messages"
 	Sentry_Peers_FullMethodName                    = "/sentry.Sentry/Peers"
@@ -139,7 +140,7 @@ func (c *sentryClient) SendMessageToRandomPeers(ctx context.Context, in *SendMes
 
 func (c *sentryClient) SendMessageToRandomPeersCustom(ctx context.Context, in *SendMessageToRandomPeersRequest, opts ...grpc.CallOption) (*SentPeers, error) {
 	out := new(SentPeers)
-	err := c.cc.Invoke(ctx, Sentry_SendMessageToRandomPeers_FullMethodName, in, out, opts...)
+	err := c.cc.Invoke(ctx, Sentry_SendMessageToRandomPeersCustom_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
