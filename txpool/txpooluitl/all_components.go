@@ -119,8 +119,8 @@ func AllComponents(ctx context.Context, cfg txpoolcfg.Config, cache kvcache.Cach
 	chainID, _ := uint256.FromBig(chainConfig.ChainID)
 
 	shanghaiTime := chainConfig.ShanghaiTime
-	if cfg.OverrideShanghaiTime != nil {
-		shanghaiTime = cfg.OverrideShanghaiTime
+	if cfg.OverrideFeynmanTime != nil {
+		shanghaiTime = cfg.OverrideFeynmanTime
 	}
 
 	txPool, err := txpool.New(newTxs, chainDB, cfg, cache, *chainID, shanghaiTime)
