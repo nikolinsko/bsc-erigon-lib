@@ -66,6 +66,7 @@ type Config struct {
 	ShanghaiTime     *big.Int `json:"shanghaiTime,omitempty"`
 	KeplerTime       *big.Int `json:"keplerTime,omitempty"`
 	FeynmanTime      *big.Int `json:"feynmanTime,omitempty"`
+	FeynmanFixTime   *big.Int `json:"feynmanFixTime,omitempty"`
 	CancunTime       *big.Int `json:"cancunTime,omitempty"`
 	ShardingForkTime *big.Int `json:"shardingForkTime,omitempty"`
 	PragueTime       *big.Int `json:"pragueTime,omitempty"`
@@ -102,7 +103,7 @@ func (c *Config) String() string {
 	engine := c.getEngine()
 
 	if c.Consensus == ParliaConsensus {
-		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Planck: %v, Luban: %v, Plato: %v, Hertz: %v, Hertzfix: %v, ShanghaiTime: %v, KeplerTime %v, FeynmanTime %v, Engine: %v}",
+		return fmt.Sprintf("{ChainID: %v Ramanujan: %v, Niels: %v, MirrorSync: %v, Bruno: %v, Euler: %v, Gibbs: %v, Nano: %v, Moran: %v, Planck: %v, Luban: %v, Plato: %v, Hertz: %v, Hertzfix: %v, ShanghaiTime: %v, KeplerTime %v, FeynmanTime %v, FeynmanFixTime %v, Engine: %v}",
 			c.ChainID,
 			c.RamanujanBlock,
 			c.NielsBlock,
@@ -120,6 +121,7 @@ func (c *Config) String() string {
 			c.ShanghaiTime,
 			c.KeplerTime,
 			c.FeynmanTime,
+			c.FeynmanFixTime,
 			engine,
 		)
 	}
@@ -393,6 +395,20 @@ func (c *Config) IsOnFeynman(currentBlockNumber *big.Int, lastBlockTime uint64, 
 	return !c.IsFeynman(lastBlockNumber.Uint64(), lastBlockTime) && c.IsFeynman(currentBlockNumber.Uint64(), currentBlockTime)
 }
 
+// IsFeynmanFix returns whether time is either equal to the FeynmanFix fork time or greater.
+func (c *Config) IsFeynmanFix(num uint64, time uint64) bool {
+	return c.IsLondon(num) && isForked(c.FeynmanFixTime, time)
+}
+
+// IsOnFeynmanFix returns whether currentBlockTime is either equal to the FeynmanFix fork time or greater firstly.
+func (c *Config) IsOnFeynmanFix(currentBlockNumber *big.Int, lastBlockTime uint64, currentBlockTime uint64) bool {
+	lastBlockNumber := new(big.Int)
+	if currentBlockNumber.Cmp(big.NewInt(1)) >= 0 {
+		lastBlockNumber.Sub(currentBlockNumber, big.NewInt(1))
+	}
+	return !c.IsFeynmanFix(lastBlockNumber.Uint64(), lastBlockTime) && c.IsFeynmanFix(currentBlockNumber.Uint64(), currentBlockTime)
+}
+
 // CheckCompatible checks whether scheduled fork transitions have been imported
 // with a mismatching chain configuration.
 func (c *Config) CheckCompatible(newcfg *Config, height uint64) *ConfigCompatError {
@@ -567,10 +583,9 @@ func (c *Config) checkCompatible(newcfg *Config, head uint64) *ConfigCompatError
 	if incompatible(c.HertzBlock, newcfg.HertzBlock, head) {
 		return newCompatError("hertz fork block", c.HertzBlock, newcfg.HertzBlock)
 	}
-	// TODO @Blxdyx It's temporary fix for rpc issues, will add in next commit
-	//if incompatible(c.HertzfixBlock, newcfg.HertzfixBlock, head) {
-	//	return newCompatError("hertz fork block", c.HertzfixBlock, newcfg.HertzfixBlock)
-	//}
+	if incompatible(c.HertzfixBlock, newcfg.HertzfixBlock, head) {
+		return newCompatError("hertz fork block", c.HertzfixBlock, newcfg.HertzfixBlock)
+	}
 	return nil
 }
 
@@ -750,6 +765,7 @@ type Rules struct {
 	IsNano, IsMoran, IsGibbs, IsPlanck, IsLuban, IsPlato, IsHertz bool
 	IsHertzfix                                                    bool
 	IsFeynman                                                     bool
+	IsFeynmanFix                                                  bool
 	IsEip1559FeeCollector                                         bool
 	IsParlia, IsAura                                              bool
 }
@@ -784,6 +800,7 @@ func (c *Config) Rules(num uint64, time uint64) *Rules {
 		IsHertzfix:            c.IsHertzfix(num),
 		IsKepler:              c.IsKepler(num, time),
 		IsFeynman:             c.IsFeynman(num, time),
+		IsFeynmanFix:          c.IsFeynmanFix(num, time),
 		IsEip1559FeeCollector: c.IsEip1559FeeCollector(num),
 		IsAura:                c.Aura != nil,
 		IsParlia:              true,
